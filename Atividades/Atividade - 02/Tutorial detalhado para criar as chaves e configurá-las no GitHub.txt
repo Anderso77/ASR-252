@@ -1,0 +1,141 @@
+A seguir, um tutorial detalhado para criar as chaves e configurá-las no GitHub.
+
+1. Criar um Par de Chaves SSH
+Você usará o comando ssh-keygen no seu terminal (Linux, macOS) ou no Git Bash/Terminal do Windows.
+
+Abra seu terminal (ou Git Bash no Windows).
+
+Gere o novo par de chaves. Recomenda-se usar o algoritmo Ed25519 para maior segurança e desempenho. Substitua seu_email@exemplo.com pelo seu e-mail do GitHub.
+
+Bash
+
+ssh-keygen -t ed25519 -C "seu_email@exemplo.com"
+Se seu sistema for antigo e não suportar ed25519, use:
+
+Bash
+
+ssh-keygen -t rsa -b 4096 -C "seu_email@exemplo.com"
+Localização e Frase Secreta:
+
+"Enter a file in which to save the key": Pressione Enter para aceitar o local padrão (~/.ssh/id_ed25519 ou ~/.ssh/id_rsa).
+
+"Enter passphrase" / "Enter same passphrase again": Recomenda-se fortemente que você insira uma frase secreta (passphrase) segura. Esta frase protegerá sua chave privada caso alguém acesse seu computador. Você precisará digitá-la ao usar a chave pela primeira vez em uma sessão, mas o agente SSH (SSH agent, veja o próximo passo) pode gerenciá-la depois. Pressione Enter nas duas vezes para deixar sem frase secreta, mas isso é menos seguro.
+
+Ao final, duas chaves serão criadas (no diretório .ssh dentro do seu diretório de usuário):
+
+id_ed25519 (ou id_rsa): Sua chave privada. NUNCA a compartilhe.
+
+id_ed25519.pub (ou id_rsa.pub): Sua chave pública. É esta que você enviará para o GitHub.
+
+2. Adicionar a Chave ao SSH Agent
+O SSH Agent armazena sua chave privada e a frase secreta (se você a configurou) para que você não precise digitá-las a cada operação do Git.
+
+Inicie o ssh-agent em segundo plano:
+
+Bash
+
+eval "$(ssh-agent -s)"
+Adicione sua chave privada ao ssh-agent:
+
+Bash
+
+ssh-add ~/.ssh/id_ed25519
+(Se você usou RSA, substitua por ssh-add ~/.ssh/id_rsa).
+
+Se você configurou uma frase secreta, será solicitado a digitá-la neste momento.
+
+3. Adicionar a Chave Pública ao GitHub
+Agora, você precisa copiar o conteúdo da sua chave pública e adicioná-lo à sua conta do GitHub.
+
+Copie sua chave pública:
+
+Linux (com xclip):
+
+Bash
+
+sudo apt-get install xclip # Se não estiver instalado
+xclip -sel clip < ~/.ssh/id_ed25519.pub
+macOS (com pbcopy):
+
+Bash
+
+pbcopy < ~/.ssh/id_ed25519.pub
+Windows (Git Bash ou PowerShell/CMD):
+
+Bash
+
+cat ~/.ssh/id_ed25519.pub
+(Neste caso, o terminal exibirá o conteúdo da chave. Selecione e copie o texto manualmente, começando em ssh-ed25519 e terminando com o seu e-mail, sem quebras de linha adicionais.)
+
+Vá para o GitHub:
+
+Acesse o GitHub e faça login.
+
+Clique na sua foto de perfil (canto superior direito) e depois em Settings (Configurações).
+
+No menu lateral, clique em SSH and GPG keys (Chaves SSH e GPG).
+
+Clique no botão New SSH key ou Add SSH key.
+
+Adicione a chave:
+
+Title (Título): Dê um nome descritivo para a chave (ex: "Laptop Pessoal", "PC do Trabalho").
+
+Key (Chave): Cole o conteúdo da chave pública que você copiou na etapa 1.
+
+Clique em Add SSH key.
+
+4. Testar a Conexão SSH com o GitHub
+Para confirmar que tudo foi configurado corretamente, teste a conexão:
+
+No terminal, execute:
+
+Bash
+
+ssh -T git@github.com
+Resposta Esperada:
+
+Na primeira vez, ele perguntará se você tem certeza que deseja continuar a conexão. Digite yes e pressione Enter.
+
+Se a autenticação for bem-sucedida, você verá uma mensagem como:
+
+Hi SEU_USUARIO! You've successfully authenticated, but GitHub does not provide shell access.
+Se você vir esta mensagem, suas chaves estão configuradas e funcionando!
+
+5. Usar o GitHub com Chave Pública/Privada
+Para usar a autenticação SSH com o Git, você deve garantir que seus repositórios locais usem a URL SSH em vez da URL HTTPS.
+
+5.1 Clonar um Repositório (Novo)
+Ao clonar um novo repositório, use a opção SSH:
+
+Na página do repositório no GitHub, clique no botão Code (Código).
+
+Selecione a guia SSH.
+
+Copie a URL (que se parece com git@github.com:SEU_USUARIO/nome-do-repositorio.git).
+
+No seu terminal, clone o repositório:
+
+Bash
+
+git clone git@github.com:SEU_USUARIO/nome-do-repositorio.git
+5.2 Mudar a URL Remote (Repositório Existente)
+Se você já clonou um repositório usando HTTPS, você pode mudar o remote para usar SSH:
+
+Navegue até o diretório do seu repositório local.
+
+Verifique o remote atual:
+
+Bash
+
+git remote -v
+(Se a URL começar com https://, você está usando HTTPS.)
+
+Mude o remote para SSH:
+
+Bash
+
+git remote set-url origin git@github.com:SEU_USUARIO/nome-do-repositorio.git
+(Substitua o caminho do repositório pelo correto.)
+
+A partir de agora, qualquer operação Git (como push, pull, fetch) usará o protocolo SSH e autenticará automaticamente com sua chave privada, sem pedir usuário e senha!
